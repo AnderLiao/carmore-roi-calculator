@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CARMORE — Philippines Solar + ESS ROI Calculator</title>
+<style>
+:root {
+  --primary: #0077B6;
+  --primary-dark: #005A8C;
+  --accent: #00B894;
+  --accent-dark: #009B7D;
+  --warn: #E17055;
+  --warn-dark: #D35400;
+  --bg: #F0F4F8;
+  --card: #FFFFFF;
+  --text: #2D3436;
+  --text-light: #636E72;
+  --border: #DFE6E9;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --radius: 12px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:var(--bg); color:var(--text); line-height:1.6; }
+
+.container { max-width:960px; margin:0 auto; padding:16px; }
+
+/* Header */
+header { background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:#fff; padding:24px 0; text-align:center; }
+header h1 { font-size:1.5rem; font-weight:700; margin-bottom:4px; }
+header p { font-size:0.9rem; opacity:0.85; }
+.brand { font-size:0.85rem; letter-spacing:2px; text-transform:uppercase; opacity:0.7; margin-bottom:8px; }
+
+/* Steps */
+.step { background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:24px; margin-bottom:20px; }
+.step-header { display:flex; align-items:center; gap:10px; margin-bottom:18px; }
+.step-num { background:var(--primary); color:#fff; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.9rem; flex-shrink:0; }
+.step-title { font-size:1.15rem; font-weight:600; }
+
+/* Form */
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.form-group { display:flex; flex-direction:column; gap:4px; }
+.form-group label { font-size:0.82rem; font-weight:600; color:var(--text-light); text-transform:uppercase; letter-spacing:0.5px; }
+.form-group select, .form-group input { padding:10px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:0.95rem; background:#fff; color:var(--text); transition:border-color 0.2s; }
+.form-group select:focus, .form-group input:focus { outline:none; border-color:var(--primary); }
+.form-group.full { grid-column:1/-1; }
+
+/* Checkbox group */
+.checkbox-row { display:flex; flex-wrap:wrap; gap:12px; align-items:center; padding-top:4px; }
+.checkbox-row label { display:flex; align-items:center; gap:6px; font-size:0.9rem; cursor:pointer; font-weight:400; color:var(--text); text-transform:none; letter-spacing:0; }
+.checkbox-row input[type="checkbox"] { width:18px; height:18px; accent-color:var(--primary); }
+
+/* Stats */
+.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.stat-card { text-align:center; padding:16px 8px; background:var(--bg); border-radius:10px; }
+.stat-value { font-size:1.6rem; font-weight:700; color:var(--primary); }
+.stat-label { font-size:0.75rem; color:var(--text-light); margin-top:2px; text-transform:uppercase; letter-spacing:0.5px; }
+
+/* Recommendation */
+.rec-card { border:2px solid var(--accent); border-radius:var(--radius); padding:20px; margin-bottom:16px; position:relative; }
+.rec-badge { position:absolute; top:-12px; left:20px; background:var(--accent); color:#fff; padding:2px 14px; border-radius:20px; font-size:0.75rem; font-weight:700; text-transform:uppercase; }
+.rec-header { display:flex; justify-content:space-between; align-items:flex-start; margin-top:8px; margin-bottom:12px; flex-wrap:wrap; gap:8px; }
+.rec-model { font-size:1.4rem; font-weight:700; color:var(--primary-dark); }
+.rec-price { font-size:1.2rem; font-weight:700; color:var(--accent-dark); }
+.rec-specs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+.rec-spec { background:var(--bg); padding:4px 12px; border-radius:20px; font-size:0.8rem; color:var(--text-light); }
+
+/* ROI Details */
+.roi-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.roi-item { display:flex; justify-content:space-between; padding:10px 14px; background:var(--bg); border-radius:8px; }
+.roi-item-label { font-size:0.85rem; color:var(--text-light); }
+.roi-item-value { font-size:0.95rem; font-weight:600; }
+
+/* Payback dual display */
+.payback-dual { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px; }
+.payback-box { border-radius:10px; padding:20px; text-align:center; }
+.payback-box.energy-only { background:linear-gradient(135deg, var(--accent), var(--accent-dark)); color:#fff; }
+.payback-box.total-value { background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:#fff; }
+.payback-box .big { font-size:2.2rem; font-weight:800; }
+.payback-box .label { font-size:0.8rem; opacity:0.9; margin-top:2px; }
+.payback-box .sublabel { font-size:0.7rem; opacity:0.7; margin-top:4px; }
+
+/* Outage Protection */
+.outage-section { margin-top:16px; border-top:1.5px solid var(--border); padding-top:16px; }
+.outage-title { font-size:0.95rem; font-weight:600; color:var(--warn-dark); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+.outage-icon { font-size:1.2rem; }
+.outage-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.outage-item { display:flex; justify-content:space-between; padding:8px 12px; background:#FFF5F0; border-radius:8px; border-left:3px solid var(--warn); }
+.outage-item-label { font-size:0.82rem; color:var(--text-light); }
+.outage-item-value { font-size:0.9rem; font-weight:600; color:var(--warn-dark); }
+.outage-total { display:flex; justify-content:space-between; padding:12px 14px; background:var(--warn); color:#fff; border-radius:8px; margin-top:10px; font-weight:600; }
+.outage-note { font-size:0.75rem; color:var(--text-light); margin-top:8px; font-style:italic; }
+
+/* Generator comparison */
+.gen-compare { margin-top:16px; border-top:1px solid var(--border); padding-top:16px; }
+.gen-compare h4 { font-size:0.9rem; margin-bottom:10px; color:var(--text-light); }
+.gen-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+.gen-table th, .gen-table td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--border); }
+.gen-table th { color:var(--text-light); font-weight:600; font-size:0.75rem; text-transform:uppercase; }
+.gen-table .win { color:var(--accent-dark); font-weight:600; }
+
+/* Tooltip */
+.info-tip { position:relative; display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; background:var(--border); color:var(--text-light); font-size:0.65rem; font-weight:700; cursor:pointer; margin-left:4px; flex-shrink:0; user-select:none; vertical-align:middle; font-style:normal; }
+.info-tip .tip-text { visibility:hidden; opacity:0; position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%); background:var(--text); color:#fff; padding:8px 12px; border-radius:8px; font-size:0.78rem; font-weight:400; line-height:1.4; width:220px; text-align:left; z-index:100; pointer-events:none; transition:opacity 0.15s; box-shadow:0 4px 12px rgba(0,0,0,0.15); text-transform:none; letter-spacing:0; }
+.info-tip .tip-text::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:6px solid transparent; border-top-color:var(--text); }
+.info-tip.active .tip-text { visibility:visible; opacity:1; }
+@media (max-width:640px) {
+  .info-tip .tip-text { width:180px; font-size:0.72rem; left:auto; right:-8px; transform:none; }
+  .info-tip .tip-text::after { left:auto; right:12px; transform:none; }
+}
+
+/* Alt model */
+.alt-card { border:1.5px solid var(--border); border-radius:var(--radius); padding:16px; background:var(--bg); }
+.alt-card .rec-badge { background:var(--text-light); }
+
+/* Footer */
+footer { text-align:center; padding:24px 16px; font-size:0.75rem; color:var(--text-light); }
+footer a { color:var(--primary); text-decoration:none; }
+
+/* Responsive */
+@media (max-width:640px) {
+  .form-grid { grid-template-columns:1fr; }
+  .stats-grid { grid-template-columns:1fr 1fr; }
+  .roi-grid { grid-template-columns:1fr; }
+  .outage-grid { grid-template-columns:1fr; }
+  .payback-dual { grid-template-columns:1fr; }
+  .rec-header { flex-direction:column; }
+  header h1 { font-size:1.2rem; }
+  .stat-value { font-size:1.3rem; }
+  .payback-box .big { font-size:1.7rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">CARMORE</div>
+  <h1>Philippines Solar + ESS ROI Calculator</h1>
+  <p>Find out how much you can save with clean energy</p>
+</header>
+
+<div class="container">
+
+  <!-- STEP 1 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">1</div>
+      <div class="step-title">Your Home &amp; Energy Profile</div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Home Size</label>
+        <select id="homeSize" onchange="calculate()">
+          <option value="studio">Studio — 30-50 sqm</option>
+          <option value="small" selected>Small House — 50-100 sqm</option>
+          <option value="medium">Medium House — 100-150 sqm</option>
+          <option value="large">Large House — 150-250 sqm</option>
+          <option value="villa">Villa / Shop — 250+ sqm</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Household Members</label>
+        <select id="members" onchange="calculate()">
+          <option value="2">1 – 2 people</option>
+          <option value="4" selected>3 – 4 people</option>
+          <option value="6">5 – 6 people</option>
+          <option value="8">7+ people</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Air Conditioners</label>
+        <select id="aircon" onchange="calculate()">
+          <option value="1">1 unit</option>
+          <option value="2" selected>2 units</option>
+          <option value="3">3 units</option>
+          <option value="4">4+ units</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Refrigerators</label>
+        <select id="fridge" onchange="calculate()">
+          <option value="1" selected>1 unit</option>
+          <option value="2">2 units</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Primary Time at Home</label>
+        <select id="homeTime" onchange="calculate()">
+          <option value="day">Mostly Daytime</option>
+          <option value="night">Mostly Evenings/Night</option>
+          <option value="allday" selected>All Day (WFH / Retired)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>EV Charging</label>
+        <select id="ev" onchange="calculate()">
+          <option value="0" selected>No EV</option>
+          <option value="1">Yes — Night Charging</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Home-Based Business</label>
+        <select id="business" onchange="calculate()">
+          <option value="0" selected>No</option>
+          <option value="1">Yes — Small Business / Online Shop</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Outages Per Year</label>
+        <select id="outages" onchange="calculate()">
+          <option value="1">1 time (1 day each)</option>
+          <option value="2" selected>2 times (1 day each)</option>
+          <option value="4">4 times (1 day each)</option>
+          <option value="6">6+ times (1 day each)</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Other Appliances</label>
+        <div class="checkbox-row">
+          <label><input type="checkbox" id="washer" checked onchange="calculate()"> Washing Machine</label>
+          <label><input type="checkbox" id="heater" onchange="calculate()"> Water Heater</label>
+          <label><input type="checkbox" id="microwave" checked onchange="calculate()"> Microwave</label>
+          <label><input type="checkbox" id="desktop" onchange="calculate()"> Desktop PC</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">2</div>
+      <div class="step-title">Your Estimated Energy Usage</div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="dailyKwh">—</div>
+        <div class="stat-label">kWh / Day</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="monthlyKwh">—</div>
+        <div class="stat-label">kWh / Month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="monthlyBill">—</div>
+        <div class="stat-label">PHP / Month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="yearlyBill">—</div>
+        <div class="stat-label">PHP / Year</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">3</div>
+      <div class="step-title">Recommended System &amp; ROI</div>
+    </div>
+
+    <div id="recPrimary"></div>
+    <div id="recAlt" style="margin-top:16px;"></div>
+  </div>
+
+</div>
+
+<footer>
+  <p>Estimates based on Meralco Dec 2025 residential rate (PHP 13.11/kWh) and Manila average solar irradiance (4.5 peak sun hours/day).</p>
+  <p>Actual savings may vary based on usage patterns, weather, and electricity rate changes.</p>
+</footer>
+
+<script>
+// ===== TOOLTIP HELPER =====
+function tip(text) {
+  return `<span class="info-tip" onclick="toggleTip(event)">!<span class="tip-text">${text}</span></span>`;
+}
+function toggleTip(e) {
+  e.stopPropagation();
+  const el = e.currentTarget;
+  const wasActive = el.classList.contains('active');
+  document.querySelectorAll('.info-tip.active').forEach(t => t.classList.remove('active'));
+  if (!wasActive) el.classList.add('active');
+}
+document.addEventListener('click', () => {
+  document.querySelectorAll('.info-tip.active').forEach(t => t.classList.remove('active'));
+});
+
+// ===== HARD-CODED DATA =====
+
+const RATE = 13.11;          // PHP/kWh Meralco residential
+const SUN_HOURS = 4.5;       // peak sun hours/day (Manila annual avg)
+const SYS_EFF = 0.85;        // system efficiency
+
+// Appliance daily Wh
+const APPLIANCE = {
+  fridge: 640,       // 80W × 8h effective
+  aircon: 6600,      // 1,100W × 6h/day per unit (average with cycling)
+  lighting: 1600,    // 200W × 8h
+  tv: 720,           // 120W × 6h
+  fans: 1500,        // 2 fans × 75W × 10h
+  phone: 600,        // phones + laptop charging
+  washer: 300,       // 600W × 0.5h daily average
+  heater: 750,       // 1500W × 0.5h
+  microwave: 200,    // 1200W × 10min
+  desktop: 960,      // 200W × 4.8h
+  ev: 8000,          // 2000W × 4h night charge
+};
+
+// Base load by home size (Wh/day) — lighting, fans, misc
+const BASE_LOAD = {
+  studio: 2500,
+  small: 3800,
+  medium: 5200,
+  large: 7000,
+  villa: 9500,
+};
+
+// Member multiplier for misc consumption
+const MEMBER_MULT = { 2:0.85, 4:1.0, 6:1.15, 8:1.3 };
+
+// Products (optimized panel pairing, +50% markup on FOB, ×58 PHP/USD)
+// Solar cost = panels × $155/panel FOB × 1.5 × 58
+const PRODUCTS = [
+  { model:'P35',    power:3,    battery:5.27,  mppt:4,    price:135000, panels:6,  solarKw:4.26,  solarCost:81000  },
+  { model:'P510',   power:5.5,  battery:10.54, mppt:5.5,  price:270000, panels:8,  solarKw:5.68,  solarCost:108000 },
+  { model:'P816',   power:8,    battery:16,    mppt:11,   price:355000, panels:12, solarKw:8.52,  solarCost:162000 },
+  { model:'P1232',  power:12.5, battery:32,    mppt:13.2, price:585000, panels:16, solarKw:11.36, solarCost:216000 },
+  { model:'P1232T', power:12.5, battery:32,    mppt:18,   price:615000, panels:20, solarKw:14.20, solarCost:270000 },
+];
+
+// Aircon hours by home time
+const AC_HOURS = { day:5, night:7, allday:8 };
+
+// Outage loss per event (PHP) — household
+const OUTAGE_LOSS = {
+  foodSpoilage: 3500,       // fridge/freezer contents lost
+  genRental: 2500,          // emergency generator rental or fuel
+  applianceDamage: 2000,    // power surge risk on restoration
+  workLoss: 2000,           // WFH productivity loss per person-day (base)
+  businessLoss: 12000,      // small business revenue loss per day
+};
+
+// ===== CALCULATION =====
+
+function calculate() {
+  const homeSize = document.getElementById('homeSize').value;
+  const members = parseInt(document.getElementById('members').value);
+  const aircon = parseInt(document.getElementById('aircon').value);
+  const fridge = parseInt(document.getElementById('fridge').value);
+  const homeTime = document.getElementById('homeTime').value;
+  const ev = parseInt(document.getElementById('ev').value);
+  const washer = document.getElementById('washer').checked;
+  const heater = document.getElementById('heater').checked;
+  const microwave = document.getElementById('microwave').checked;
+  const desktop = document.getElementById('desktop').checked;
+  const hasBusiness = parseInt(document.getElementById('business').value);
+  const outagesPerYear = parseInt(document.getElementById('outages').value);
+
+  // Calculate daily kWh
+  const acHours = AC_HOURS[homeTime];
+  let dailyWh = BASE_LOAD[homeSize] * MEMBER_MULT[members];
+  dailyWh += fridge * APPLIANCE.fridge;
+  dailyWh += aircon * 1100 * acHours;
+  dailyWh += APPLIANCE.phone * MEMBER_MULT[members];
+  if (washer) dailyWh += APPLIANCE.washer;
+  if (heater) dailyWh += APPLIANCE.heater;
+  if (microwave) dailyWh += APPLIANCE.microwave;
+  if (desktop) dailyWh += APPLIANCE.desktop;
+  if (ev) dailyWh += APPLIANCE.ev;
+
+  const dailyKwh = dailyWh / 1000;
+  const monthlyKwh = dailyKwh * 30;
+  const monthlyBill = monthlyKwh * RATE;
+  const yearlyBill = monthlyBill * 12;
+
+  // Update Step 2
+  document.getElementById('dailyKwh').textContent = dailyKwh.toFixed(1);
+  document.getElementById('monthlyKwh').textContent = Math.round(monthlyKwh).toLocaleString();
+  document.getElementById('monthlyBill').textContent = '₱' + Math.round(monthlyBill).toLocaleString();
+  document.getElementById('yearlyBill').textContent = '₱' + Math.round(yearlyBill).toLocaleString();
+
+  // Calculate outage losses
+  const foodLoss = OUTAGE_LOSS.foodSpoilage * fridge * outagesPerYear;
+  const genLoss = OUTAGE_LOSS.genRental * outagesPerYear;
+  const surgeLoss = OUTAGE_LOSS.applianceDamage * outagesPerYear;
+  const workLoss = (homeTime === 'day' || homeTime === 'allday')
+    ? OUTAGE_LOSS.workLoss * Math.ceil(members / 2) * outagesPerYear
+    : 0;
+  const bizLoss = hasBusiness ? OUTAGE_LOSS.businessLoss * outagesPerYear : 0;
+  const totalOutageLoss = foodLoss + genLoss + surgeLoss + workLoss + bizLoss;
+
+  // Recommend product
+  let recIdx = 0;
+  if (dailyKwh <= 8)       recIdx = 0;
+  else if (dailyKwh <= 16) recIdx = 1;
+  else if (dailyKwh <= 25) recIdx = 2;
+  else if (dailyKwh <= 45) recIdx = 3;
+  else                     recIdx = 4;
+
+  const primary = PRODUCTS[recIdx];
+  const altIdx = recIdx < PRODUCTS.length - 1 ? recIdx + 1 : recIdx - 1;
+  const alt = PRODUCTS[altIdx];
+
+  const annualConsumption = dailyKwh * 365;
+  const outageData = { foodLoss, genLoss, surgeLoss, workLoss, bizLoss, totalOutageLoss, outagesPerYear, hasBusiness };
+
+  document.getElementById('recPrimary').innerHTML = renderRec(primary, annualConsumption, yearlyBill, outageData, true);
+  document.getElementById('recAlt').innerHTML = renderRec(alt, annualConsumption, yearlyBill, outageData, false);
+}
+
+function renderRec(p, annualConsumption, yearlyBill, outage, isPrimary) {
+  const solarCost = p.solarCost;
+  const totalCost = p.price + solarCost;
+
+  // Annual solar generation (gross)
+  const annualGen = p.solarKw * SUN_HOURS * 365;
+
+  // Usable generation after system losses (dust, temp, wiring)
+  const usableGen = annualGen * SYS_EFF;
+
+  // Self-consumed = min of usable generation and actual consumption
+  // Battery bridges day/night gap; all usable solar offsets grid purchase
+  // Excess generation beyond consumption is not counted (no net metering export assumed)
+  const selfConsumed = Math.min(usableGen, annualConsumption);
+  const selfRatio = usableGen > 0 ? selfConsumed / usableGen : 0;
+
+  // Savings — pure self-consumption, no export income
+  const selfSavings = selfConsumed * RATE;
+  const effectiveSavings = selfSavings;
+
+  // Payback: energy only
+  const paybackEnergy = totalCost / effectiveSavings;
+  const tenYearEnergy = effectiveSavings * 10 - totalCost;
+
+  // Payback: total value (energy + outage protection)
+  const totalAnnualValue = effectiveSavings + outage.totalOutageLoss;
+  const paybackTotal = totalCost / totalAnnualValue;
+  const tenYearTotal = totalAnnualValue * 10 - totalCost;
+
+  // Diesel generator comparison
+  const dieselDaily = 28.5 * 58;
+  const dieselAnnual = dieselDaily * 120;
+  const dieselFiveYear = dieselAnnual * 5;
+
+  const badgeText = isPrimary ? 'Recommended' : 'Alternative';
+  const cardClass = isPrimary ? 'rec-card' : 'rec-card alt-card';
+
+  return `
+    <div class="${cardClass}">
+      <div class="rec-badge">${badgeText}</div>
+      <div class="rec-header">
+        <div>
+          <div class="rec-model">${p.model}</div>
+          <div style="font-size:0.85rem;color:var(--text-light);">${p.power}kW Inverter &bull; ${p.battery}kWh Battery</div>
+        </div>
+        <div class="rec-price">₱${totalCost.toLocaleString()}</div>
+      </div>
+      <div class="rec-specs">
+        <span class="rec-spec">${p.panels} × 710W Solar Panels</span>
+        <span class="rec-spec">${p.solarKw}kW Total PV</span>
+        <span class="rec-spec">${p.mppt}kW MPPT</span>
+        <span class="rec-spec">LiFePO₄</span>
+        <span class="rec-spec">10ms UPS</span>
+      </div>
+
+      <div class="roi-grid">
+        <div class="roi-item">
+          <span class="roi-item-label">Annual Solar Generation ${tip('Total electricity your solar panels produce per year, based on ' + p.solarKw + 'kW system and 4.5 peak sun hours/day in Manila.')}</span>
+          <span class="roi-item-value">${Math.round(annualGen).toLocaleString()} kWh</span>
+        </div>
+        <div class="roi-item">
+          <span class="roi-item-label">Self-Consumed (${Math.round(selfRatio*100)}%) ${tip('Portion of solar energy used directly by your home. The battery stores daytime solar for nighttime use, maximizing self-consumption.')}</span>
+          <span class="roi-item-value">${Math.round(selfConsumed).toLocaleString()} kWh</span>
+        </div>
+        <div class="roi-item">
+          <span class="roi-item-label">Annual Grid Savings ${tip('Money saved by using your own solar energy instead of buying from Meralco at ₱13.11/kWh. Only counts self-consumed energy.')}</span>
+          <span class="roi-item-value" style="color:var(--accent-dark)">₱${Math.round(selfSavings).toLocaleString()}</span>
+        </div>
+        <div class="roi-item">
+          <span class="roi-item-label">ESS Unit Price ${tip('All-in-one energy storage system: includes inverter, LiFePO₄ battery, BMS, and built-in UPS with 10ms switchover.')}</span>
+          <span class="roi-item-value">₱${p.price.toLocaleString()}</span>
+        </div>
+        <div class="roi-item">
+          <span class="roi-item-label">Solar Panels + Install ${tip(p.panels + ' × 710W high-efficiency panels with mounting brackets, connectors, and lightning protection wiring.')}</span>
+          <span class="roi-item-value">₱${solarCost.toLocaleString()}</span>
+        </div>
+        <div class="roi-item">
+          <span class="roi-item-label">Annual Energy Savings ${tip('Annual electricity bill reduction by using self-generated solar power instead of buying from Meralco at ₱13.11/kWh.')}</span>
+          <span class="roi-item-value" style="color:var(--accent-dark);font-size:1.05rem">₱${Math.round(effectiveSavings).toLocaleString()}</span>
+        </div>
+        <div class="roi-item">
+          <span class="roi-item-label">10-Year Gross Savings ${tip('Total electricity bill savings over 10 years before deducting system cost. This is how much you would have paid Meralco without solar.')}</span>
+          <span class="roi-item-value" style="color:var(--accent-dark);font-size:1.05rem">₱${Math.round(effectiveSavings * 10).toLocaleString()}</span>
+        </div>
+        <div class="roi-item">
+          <span class="roi-item-label">10-Year Net Savings ${tip('Gross savings minus system cost = your actual profit. LiFePO₄ batteries last 4,000-10,000 cycles (10+ years).')}</span>
+          <span class="roi-item-value" style="color:${tenYearEnergy>0?'var(--accent-dark)':'#d63031'};font-size:1.05rem">₱${Math.round(tenYearEnergy).toLocaleString()}</span>
+        </div>
+      </div>
+
+      <!-- Outage Protection Value -->
+      ${isPrimary ? `
+      <div class="outage-section">
+        <div class="outage-title">
+          <span class="outage-icon">⚡</span> Outage Protection Value (${outage.outagesPerYear} outage${outage.outagesPerYear>1?'s':''}/year)
+        </div>
+        <div class="outage-grid">
+          <div class="outage-item">
+            <span class="outage-item-label">Food Spoilage Avoided ${tip('Refrigerated and frozen food lost during a full-day outage in tropical climate. Spoilage begins within 4-6 hours without power.')}</span>
+            <span class="outage-item-value">₱${outage.foodLoss.toLocaleString()}</span>
+          </div>
+          <div class="outage-item">
+            <span class="outage-item-label">Generator Rental Saved ${tip('Cost of renting or fueling an emergency diesel generator during an outage. With ESS, backup power is instant and free.')}</span>
+            <span class="outage-item-value">₱${outage.genLoss.toLocaleString()}</span>
+          </div>
+          <div class="outage-item">
+            <span class="outage-item-label">Appliance Surge Protection ${tip('Power surges when grid electricity is restored can damage AC compressors, computers, and electronics. UPS prevents this entirely.')}</span>
+            <span class="outage-item-value">₱${outage.surgeLoss.toLocaleString()}</span>
+          </div>
+          <div class="outage-item">
+            <span class="outage-item-label">${outage.workLoss > 0 ? 'Work Interruption Avoided' : 'Work Interruption (N/A)'} ${outage.workLoss > 0 ? tip('Lost productivity for household members who work from home or run online businesses during a power outage.') : ''}</span>
+            <span class="outage-item-value">${outage.workLoss > 0 ? '₱'+outage.workLoss.toLocaleString() : '—'}</span>
+          </div>
+          ${outage.hasBusiness ? `
+          <div class="outage-item" style="grid-column:1/-1;border-left-color:var(--warn-dark);background:#FFEAA7;">
+            <span class="outage-item-label" style="font-weight:600;color:var(--warn-dark)">Business Revenue Loss Avoided</span>
+            <span class="outage-item-value" style="color:var(--warn-dark);font-size:1rem">₱${outage.bizLoss.toLocaleString()}</span>
+          </div>` : ''}
+        </div>
+        <div class="outage-total">
+          <span>Annual Outage Loss Avoided</span>
+          <span>₱${outage.totalOutageLoss.toLocaleString()}/yr</span>
+        </div>
+        <div class="outage-note">
+          Without battery backup, each power outage costs your household an estimated ₱${Math.round(outage.totalOutageLoss / outage.outagesPerYear).toLocaleString()} in damages and lost productivity.
+        </div>
+      </div>` : ''}
+
+      <!-- Dual Payback Display -->
+      <div class="payback-dual">
+        <div class="payback-box energy-only">
+          <div class="big">${paybackEnergy.toFixed(1)} Yrs</div>
+          <div class="label">Energy Savings Only</div>
+          <div class="sublabel">₱${Math.round(effectiveSavings).toLocaleString()}/yr saved</div>
+        </div>
+        <div class="payback-box total-value">
+          <div class="big">${paybackTotal.toFixed(1)} Yrs</div>
+          <div class="label">Total Value (incl. Protection)</div>
+          <div class="sublabel">₱${Math.round(totalAnnualValue).toLocaleString()}/yr total value</div>
+        </div>
+      </div>
+
+      ${isPrimary ? `
+      <div class="gen-compare">
+        <h4>vs. Traditional Diesel Generator (5kW)</h4>
+        <table class="gen-table">
+          <tr><th></th><th>Diesel Generator</th><th>${p.model} + Solar</th></tr>
+          <tr><td>Fuel / Electricity Cost</td><td>₱${Math.round(dieselAnnual).toLocaleString()}/yr</td><td class="win">₱0/yr (solar powered)</td></tr>
+          <tr><td>Carbon Emissions</td><td>0.71 kg CO₂/hr</td><td class="win">Zero</td></tr>
+          <tr><td>Noise Level</td><td>80 dB</td><td class="win">50-60 dB</td></tr>
+          <tr><td>5-Year Total Cost</td><td>₱${Math.round(dieselFiveYear).toLocaleString()}</td><td class="win">₱${totalCost.toLocaleString()} (one-time)</td></tr>
+          <tr><td>Blackout Protection</td><td>Manual start, fuel needed</td><td class="win">Automatic 10ms switchover</td></tr>
+        </table>
+      </div>` : ''}
+    </div>
+  `;
+}
+
+// Initial calculation
+calculate();
+</script>
+</body>
+</html>
